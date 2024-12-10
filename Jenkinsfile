@@ -7,6 +7,7 @@ pipeline {
         APPLICATION_ID = '673413da502d06461c39d283'
         SCA_API_URL = 'https://appsecops-api.intruceptlabs.com/api/v1/integrations/sca-scans'
         SAST_API_URL = 'https://appsecops-api.intruceptlabs.com/api/v1/integrations/sast-scans'
+        
     }
 
     stages {
@@ -69,13 +70,17 @@ pipeline {
         }
 
         stage('Check SCA Result') {
-            when {
-                expression { return env.CAN_PROCEED_SCA != 'true' }
-            }
-            steps {
-                error "SCA scan failed. Deployment cancelled."
-            }
-        }
+	       when {
+		       expression { return env.CAN_PROCEED_SCA != 'true' }
+	       }
+	       steps {
+		       script {
+		           catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+		                error "SCA scan failed. Deployment cancelled."
+		           }
+		       }
+	       }
+	    }
 
         stage('Perform SAST Scan') {
             steps {
